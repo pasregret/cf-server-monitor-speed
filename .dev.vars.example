@@ -1,0 +1,2 @@
+# Set a unique secret before connecting any agents.
+API_SECRET=

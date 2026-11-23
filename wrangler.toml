@@ -1,0 +1,37 @@
+# Cloudflare Workers 发布与本地开发共用配置
+name = "cf-server-monitor-speed"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+keep_vars = true
+
+# 定时任务配置（UTC）
+# - 每分钟：执行离线节点、资源告警
+# - 每小时：合并执行其他定时任务（表轮换、旧表清理、按配置时区/小时触发服务器到期检测）
+# - 修改时同步核对 src/index.js 的 scheduled 处理
+[triggers]
+crons = ["*/1 * * * *", "0 * * * *"]
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cf-server-monitor-speed-db"
+
+# Durable Objects：实时指标广播中心
+# 首次部署由下方 SQLite 迁移创建命名空间。
+[[durable_objects.bindings]]
+name = "METRICS_BROADCASTER"
+class_name = "MetricsBroadcaster"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["MetricsBroadcaster"]
+
+# 开发服务器配置
+[dev]
+port = 8787
+local_protocol = "https"
